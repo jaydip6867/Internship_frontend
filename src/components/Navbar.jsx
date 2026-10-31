@@ -76,7 +76,7 @@ const Navbar = ({ onOpenAddInquiry }) => {
             {/* DB status pill */}
             <div className="hidden lg:flex items-center text-[11px] font-medium text-emerald-400 bg-emerald-950/60 px-3 py-1.5 rounded-full border border-emerald-800/50">
               <span className="w-2 h-2 rounded-full bg-emerald-400 mr-2 animate-pulse"></span>
-              <span>DB: Internship_jd</span>
+              {/* <span>DB: Internship_jd</span> */}
             </div>
 
             {/* New Inquiry Action */}
