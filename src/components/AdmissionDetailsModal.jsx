@@ -103,6 +103,10 @@ const AdmissionDetailsModal = ({ isOpen, onClose, admission, onSuccess }) => {
               <span className="text-slate-500">College / Institute:</span>
               <span className="font-semibold text-slate-800">{admission.collegeName || 'N/A'}</span>
             </div>
+            <div className="grid grid-cols-2 p-3 bg-indigo-50/50">
+              <span className="text-indigo-900 font-semibold">Internship Company:</span>
+              <span className="font-bold text-indigo-900">{admission.company || 'Creative Web Infotech'}</span>
+            </div>
             <div className="grid grid-cols-2 p-3">
               <span className="text-slate-500">Internship Domain:</span>
               <span className="font-bold text-indigo-700">{admission.domain}</span>

@@ -114,21 +114,26 @@ const Inquiries = ({
     }
   };
 
-  // Collect dynamic unique domains from inquiries list
+  // Strictly exclude inquiries that have already been converted to admissions
+  const activeInquiries = inquiries.filter(
+    (inq) => !inq.isConverted && inq.status !== 'Converted to Admission'
+  );
+
+  // Collect dynamic unique domains from active inquiries list
   const availableDomains = Array.from(
     new Set(
-      inquiries
+      activeInquiries
         .map((inq) => inq.interestedDomain)
         .filter(Boolean)
     )
   ).sort();
 
   // Pagination calculation
-  const totalRecords = inquiries.length;
+  const totalRecords = activeInquiries.length;
   const totalPages = Math.ceil(totalRecords / pageSize) || 1;
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = Math.min(startIndex + pageSize, totalRecords);
-  const currentInquiries = inquiries.slice(startIndex, endIndex);
+  const currentInquiries = activeInquiries.slice(startIndex, endIndex);
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -189,11 +194,10 @@ const Inquiries = ({
             onChange={(e) => setSelectedStatus(e.target.value)}
             className="px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
           >
-            <option value="All">All Statuses</option>
+            <option value="All">All Inquiries</option>
             <option value="New">New</option>
             <option value="Interested">Interested</option>
             <option value="Follow-up">Follow-up</option>
-            <option value="Converted to Admission">Converted to Admission</option>
             <option value="Not Interested">Not Interested</option>
           </select>
 
@@ -362,22 +366,13 @@ const Inquiries = ({
 
                         {/* Row 2: Convert to Admission & Edit */}
                         <div className="flex items-center gap-1">
-                          {!inq.isConverted ? (
-                            <button
-                              onClick={() => onOpenConvert(inq)}
-                              title="Convert to Admission"
-                              className="p-1 text-slate-600 hover:text-purple-600 hover:bg-purple-50 rounded-md transition-colors border border-slate-200"
-                            >
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                            </button>
-                          ) : (
-                            <span
-                              title="Admission Enrolled"
-                              className="p-1 text-purple-600 bg-purple-50 rounded-md border border-purple-200 cursor-default"
-                            >
-                              <GraduationCap className="w-3.5 h-3.5" />
-                            </span>
-                          )}
+                          <button
+                            onClick={() => onOpenConvert(inq)}
+                            title="Convert to Admission"
+                            className="p-1 text-slate-600 hover:text-purple-600 hover:bg-purple-50 rounded-md transition-colors border border-slate-200"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                          </button>
                           <button
                             onClick={() => onOpenEditInquiry(inq)}
                             title="Edit Inquiry"

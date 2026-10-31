@@ -206,11 +206,16 @@ const Admissions = ({ onOpenAdmissionDetails }) => {
                       {startIndex + index + 1}
                     </td>
 
-                    {/* Reg No & Student */}
+                    {/* Reg No & Student & Company */}
                     <td className="px-4 py-3.5">
-                      <span className="font-mono text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
-                        {adm.registrationNo}
-                      </span>
+                      <div className="flex items-center space-x-1.5 flex-wrap gap-1">
+                        <span className="font-mono text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                          {adm.registrationNo}
+                        </span>
+                        <span className="text-[10px] font-bold text-teal-800 bg-teal-50 border border-teal-200 px-1.5 py-0.5 rounded">
+                          {adm.company || 'Creative Web Infotech'}
+                        </span>
+                      </div>
                       <div className="font-bold text-slate-900 text-sm mt-1">{adm.studentName}</div>
                       <div className="text-[11px] text-slate-500">{adm.contactNo}</div>
                     </td>

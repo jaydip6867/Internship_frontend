@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
-import { X, CheckCircle, DollarSign, Calendar, Clock, CreditCard, ShieldCheck } from 'lucide-react';
+import { X, CheckCircle, DollarSign, Calendar, Clock, CreditCard, ShieldCheck, Building2 } from 'lucide-react';
 import axiosClient from '../api/axiosClient';
+
+const COMPANIES = [
+  'Creative Web Infotech',
+  'Granthi It Solution'
+];
 
 const BATCH_TIMINGS = [
   'Morning (9:00 AM - 1:00 PM)',
@@ -28,6 +33,7 @@ const PAYMENT_MODES = [
 
 const ConvertAdmissionModal = ({ isOpen, onClose, inquiry, onSuccess }) => {
   const [formData, setFormData] = useState({
+    company: 'Creative Web Infotech',
     duration: '6 Months (Full Live Project Internship)',
     batchTime: 'Morning (9:00 AM - 1:00 PM)',
     admissionDate: new Date().toISOString().split('T')[0],
@@ -133,6 +139,24 @@ const ConvertAdmissionModal = ({ isOpen, onClose, inquiry, onSuccess }) => {
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-bold text-slate-800 mb-1 flex items-center">
+                <Building2 className="w-3.5 h-3.5 mr-1 text-indigo-600" />
+                Internship Company / Firm <span className="text-red-500 ml-1">*</span>
+              </label>
+              <select
+                name="company"
+                value={formData.company}
+                onChange={handleChange}
+                className="w-full px-3 py-2 text-sm font-bold text-indigo-950 rounded-lg border-2 border-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-indigo-50/50"
+                required
+              >
+                {COMPANIES.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+
             <div>
               <label className="block text-xs font-medium text-slate-700 mb-1">
                 Internship Duration

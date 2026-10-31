@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap, Lock, User, ArrowRight, ShieldCheck, KeyRound, Sparkles } from 'lucide-react';
+import { GraduationCap, Lock, User, ArrowRight, ShieldCheck } from 'lucide-react';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -130,29 +130,6 @@ const Login = () => {
               )}
             </button>
           </form>
-
-          {/* Quick Credential Box */}
-          <div className="mt-6 pt-5 border-t border-slate-700/60">
-            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-700/80 text-xs">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="font-semibold text-slate-300 flex items-center">
-                  <KeyRound className="w-3.5 h-3.5 mr-1 text-amber-400" /> Default Credentials:
-                </span>
-                <button
-                  type="button"
-                  onClick={fillAdminCredentials}
-                  className="text-[11px] text-indigo-400 hover:text-indigo-300 font-semibold flex items-center space-x-0.5"
-                >
-                  <Sparkles className="w-3 h-3 mr-0.5" />
-                  <span>Auto-fill</span>
-                </button>
-              </div>
-              <div className="text-slate-400 font-mono text-[11px] space-y-0.5">
-                <p>Username: <strong className="text-emerald-400 font-semibold">admin</strong></p>
-                <p>Password: <strong className="text-emerald-400 font-semibold">admin123</strong></p>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Footer info */}
