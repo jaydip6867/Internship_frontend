@@ -26,7 +26,7 @@ const Navbar = ({ onOpenAddInquiry }) => {
 
   return (
     <header className="bg-slate-900 border-b border-slate-800 text-white sticky top-0 z-30 shadow-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-4 sm:px-8 xl:px-[80px]">
         <div className="h-16 flex items-center justify-between">
           
           {/* Left: Brand + Desktop Navigation */}

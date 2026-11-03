@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { X, User, Phone, Mail, GraduationCap, Code2, Share2, FileText, Calendar } from 'lucide-react';
+import { X, User, Phone, Mail, GraduationCap, Code2, Share2, FileText, Calendar, Building2, IndianRupee, CheckCircle } from 'lucide-react';
 import axiosClient from '../api/axiosClient';
+
+const COMPANIES = [
+  'Creative Web Infotech',
+  'Granthi It Solution'
+];
 
 const DOMAINS = [
   'Full Stack Web Development (MERN)',
@@ -59,6 +64,9 @@ const InquiryModal = ({ isOpen, onClose, inquiryToEdit, onSuccess }) => {
     takenBy: 'Haresh Sir',
     status: 'New',
     inquiryDate: new Date().toISOString().split('T')[0],
+    company: 'Creative Web Infotech',
+    totalFees: 15000,
+    paidFees: 5000,
   });
 
   const [loading, setLoading] = useState(false);
@@ -81,6 +89,9 @@ const InquiryModal = ({ isOpen, onClose, inquiryToEdit, onSuccess }) => {
         takenBy: inquiryToEdit.takenBy || 'Haresh Sir',
         status: inquiryToEdit.status || 'New',
         inquiryDate: inquiryToEdit.inquiryDate ? new Date(inquiryToEdit.inquiryDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        company: inquiryToEdit.admissionId?.company || inquiryToEdit.company || 'Creative Web Infotech',
+        totalFees: inquiryToEdit.admissionId?.totalFees ?? inquiryToEdit.totalFees ?? 15000,
+        paidFees: inquiryToEdit.admissionId?.paidFees ?? inquiryToEdit.paidFees ?? 5000,
       });
     } else {
       setFormData({
@@ -98,6 +109,9 @@ const InquiryModal = ({ isOpen, onClose, inquiryToEdit, onSuccess }) => {
         takenBy: 'Haresh Sir',
         status: 'New',
         inquiryDate: new Date().toISOString().split('T')[0],
+        company: 'Creative Web Infotech',
+        totalFees: 15000,
+        paidFees: 5000,
       });
     }
     setError('');
@@ -384,7 +398,7 @@ const InquiryModal = ({ isOpen, onClose, inquiryToEdit, onSuccess }) => {
                     name="status"
                     value={formData.status}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-white"
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-white font-medium"
                   >
                     <option value="New">New</option>
                     <option value="Interested">Interested</option>
@@ -396,6 +410,74 @@ const InquiryModal = ({ isOpen, onClose, inquiryToEdit, onSuccess }) => {
                 </div>
               )}
             </div>
+
+            {/* If Converted to Admission, show Admission Company & Fees details */}
+            {inquiryToEdit && formData.status === 'Converted to Admission' && (
+              <div className="mt-4 p-4 rounded-xl bg-gradient-to-br from-indigo-50/70 to-blue-50/70 border border-indigo-200/80">
+                <h4 className="text-xs font-bold text-indigo-900 uppercase tracking-wider mb-3 flex items-center">
+                  <Building2 className="w-4 h-4 mr-1.5 text-indigo-600" />
+                  Admission Company & Fees Details
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Company / Organization <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      name="company"
+                      value={formData.company}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 text-sm rounded-lg border border-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-white"
+                      required
+                    >
+                      {COMPANIES.map((comp) => (
+                        <option key={comp} value={comp}>
+                          {comp}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Total Fees (₹)
+                    </label>
+                    <div className="relative">
+                      <IndianRupee className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+                      <input
+                        type="number"
+                        name="totalFees"
+                        value={formData.totalFees}
+                        onChange={handleChange}
+                        className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-white"
+                        min="0"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Initial Paid Fees (₹)
+                    </label>
+                    <div className="relative">
+                      <IndianRupee className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+                      <input
+                        type="number"
+                        name="paidFees"
+                        value={formData.paidFees}
+                        onChange={handleChange}
+                        className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-white"
+                        min="0"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <p className="mt-2 text-xs text-indigo-700 flex items-center">
+                  <CheckCircle className="w-3.5 h-3.5 mr-1 text-emerald-600 flex-shrink-0" />
+                  Saving will register this student under the selected company in Admissions.
+                </p>
+              </div>
+            )}
 
             <div className="mt-4">
               <label className="block text-xs font-medium text-slate-700 mb-1">
