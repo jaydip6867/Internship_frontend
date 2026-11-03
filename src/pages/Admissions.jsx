@@ -4,6 +4,7 @@ import {
   GraduationCap, 
   IndianRupee, 
   Eye, 
+  Edit,
   Trash2, 
   Calendar, 
   Clock, 
@@ -16,6 +17,7 @@ import {
   ChevronsRight
 } from 'lucide-react';
 import axiosClient from '../api/axiosClient';
+import EditAdmissionModal from '../components/EditAdmissionModal';
 
 const Admissions = ({ onOpenAdmissionDetails }) => {
   const [admissions, setAdmissions] = useState([]);
@@ -23,6 +25,8 @@ const Admissions = ({ onOpenAdmissionDetails }) => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+  const [editingAdmission, setEditingAdmission] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -64,6 +68,11 @@ const Admissions = ({ onOpenAdmissionDetails }) => {
       console.error(err);
       alert('Failed to delete admission');
     }
+  };
+
+  const handleOpenEdit = (admission) => {
+    setEditingAdmission(admission);
+    setIsEditModalOpen(true);
   };
 
   // Financial calculations
@@ -275,6 +284,14 @@ const Admissions = ({ onOpenAdmissionDetails }) => {
                         </button>
 
                         <button
+                          onClick={() => handleOpenEdit(adm)}
+                          title="Edit Admission"
+                          className="p-1 text-slate-600 hover:text-amber-600 hover:bg-amber-50 rounded-md transition-colors border border-slate-200"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </button>
+
+                        <button
                           onClick={() => setDeleteConfirmId(adm._id)}
                           title="Delete Admission"
                           className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors border border-slate-200"
@@ -383,6 +400,19 @@ const Admissions = ({ onOpenAdmissionDetails }) => {
           </div>
         )}
       </div>
+
+      {/* Edit Admission Modal */}
+      {isEditModalOpen && (
+        <EditAdmissionModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setEditingAdmission(null);
+          }}
+          admission={editingAdmission}
+          onSuccess={fetchAdmissions}
+        />
+      )}
 
       {/* Delete Confirmation Modal */}
       {deleteConfirmId && (
