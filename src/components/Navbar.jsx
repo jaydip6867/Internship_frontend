@@ -10,7 +10,8 @@ import {
   Menu, 
   X,
   Database,
-  PhoneCall
+  PhoneCall,
+  Sparkles
 } from 'lucide-react';
 
 const Navbar = ({ onOpenAddInquiry }) => {
@@ -19,7 +20,8 @@ const Navbar = ({ onOpenAddInquiry }) => {
 
   const navLinks = [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/today-followups', label: "Today's Follow-ups", icon: PhoneCall, highlight: true },
+    { to: '/new-leads', label: 'New Leads', icon: Sparkles, highlight: true },
+    { to: '/today-followups', label: "Today's Follow-ups", icon: PhoneCall },
     { to: '/inquiries', label: 'Inquiries', icon: Users },
     { to: '/admissions', label: 'Admissions', icon: GraduationCap },
   ];

@@ -7,6 +7,8 @@ import Dashboard from './pages/Dashboard';
 import Inquiries from './pages/Inquiries';
 import Admissions from './pages/Admissions';
 import TodayFollowups from './pages/TodayFollowups';
+import NewLeads from './pages/NewLeads';
+import PublicLeadForm from './pages/PublicLeadForm';
 
 import InquiryModal from './components/InquiryModal';
 import FollowupModal from './components/FollowupModal';
@@ -104,6 +106,18 @@ const ProtectedLayout = () => {
               }
             />
             <Route
+              path="/new-leads"
+              element={
+                <NewLeads
+                  key={`leads-${refreshKey}`}
+                  onOpenDetails={openInquiryDetails}
+                  onOpenFollowup={openFollowup}
+                  onOpenConvert={openConvert}
+                  onOpenEditInquiry={openEditInquiry}
+                />
+              }
+            />
+            <Route
               path="/today-followups"
               element={
                 <TodayFollowups
@@ -188,6 +202,8 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/apply" element={<PublicLeadForm />} />
+          <Route path="/lead-form" element={<PublicLeadForm />} />
           <Route path="/*" element={<ProtectedLayout />} />
         </Routes>
       </BrowserRouter>
