@@ -12,7 +12,8 @@ import {
   Eye,
   Plus,
   Flame,
-  Phone
+  Phone,
+  Sparkles
 } from 'lucide-react';
 import axiosClient from '../api/axiosClient';
 import { Link, useNavigate } from 'react-router-dom';
@@ -20,15 +21,17 @@ import { Link, useNavigate } from 'react-router-dom';
 const Dashboard = ({ onOpenAddInquiry, onOpenInquiryDetails, onOpenFollowup, onOpenConvert }) => {
   const [stats, setStats] = useState(null);
   const [todayDueList, setTodayDueList] = useState([]);
+  const [leadCounts, setLeadCounts] = useState({ total: 0, pending: 0 });
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [statsRes, todayDueRes] = await Promise.all([
+      const [statsRes, todayDueRes, leadsRes] = await Promise.all([
         axiosClient.get('/inquiries/stats'),
         axiosClient.get('/inquiries/today-due'),
+        axiosClient.get('/leads').catch(() => ({ data: { count: 0, leads: [] } })),
       ]);
 
       if (statsRes.data.success) {
@@ -36,6 +39,16 @@ const Dashboard = ({ onOpenAddInquiry, onOpenInquiryDetails, onOpenFollowup, onO
       }
       if (todayDueRes.data.success) {
         setTodayDueList(todayDueRes.data.inquiries);
+      }
+      if (leadsRes?.data?.leads) {
+        const all = leadsRes.data.leads;
+        const pending = all.filter((l) => !l.isConvertedToInquiry).length;
+        setLeadCounts({ total: all.length, pending });
+      } else if (statsRes.data?.stats) {
+        setLeadCounts({
+          total: statsRes.data.stats.totalLeads || 0,
+          pending: statsRes.data.stats.pendingLeads || 0,
+        });
       }
     } catch (err) {
       console.error('Dashboard data error:', err);
@@ -103,6 +116,13 @@ const Dashboard = ({ onOpenAddInquiry, onOpenInquiryDetails, onOpenFollowup, onO
               <span>Create New Inquiry</span>
             </button>
             <Link
+              to="/new-leads"
+              className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs sm:text-sm shadow-md shadow-purple-600/30 flex items-center space-x-1.5 transition-all"
+            >
+              <Sparkles className="w-4 h-4 text-amber-300" />
+              <span>New Leads ({leadCounts.pending > 0 ? `${leadCounts.pending} New` : leadCounts.total})</span>
+            </Link>
+            <Link
               to="/today-followups"
               className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs sm:text-sm shadow-md shadow-amber-500/20 flex items-center space-x-1.5 transition-all"
             >
@@ -114,7 +134,7 @@ const Dashboard = ({ onOpenAddInquiry, onOpenInquiryDetails, onOpenFollowup, onO
       </div>
 
       {/* KPI Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-5">
         {/* Card 1: Today's Due Follow-up (Clickable Highlight Card) */}
         <Link 
           to="/today-followups"
@@ -136,6 +156,36 @@ const Dashboard = ({ onOpenAddInquiry, onOpenInquiryDetails, onOpenFollowup, onO
           </div>
           <div className="mt-3 flex items-center justify-between text-xs font-semibold text-amber-800 pt-2 border-t border-amber-200/80">
             <span>Click to View All List</span>
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </div>
+        </Link>
+
+        {/* Card 2: New Leads (Google Form) - Clickable to /new-leads */}
+        <Link 
+          to="/new-leads"
+          className="bg-gradient-to-br from-purple-50 via-white to-purple-100/40 p-5 rounded-2xl border-2 border-purple-300 shadow-sm hover:shadow-md hover:border-purple-500 transition-all group block cursor-pointer"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-purple-800 flex items-center">
+                <Sparkles className="w-3.5 h-3.5 mr-1.5 text-purple-600 animate-pulse" />
+                New Leads
+                {leadCounts.pending > 0 && (
+                  <span className="ml-2 px-1.5 py-0.2 text-[10px] font-black bg-purple-600 text-white rounded-full animate-pulse">
+                    {leadCounts.pending} NEW
+                  </span>
+                )}
+              </p>
+              <h3 className="text-3xl font-black text-purple-700 mt-1 group-hover:scale-105 transition-transform">
+                {leadCounts.total}
+              </h3>
+            </div>
+            <div className="w-12 h-12 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-md shadow-purple-600/30 group-hover:rotate-6 transition-transform">
+              <Sparkles className="w-6 h-6" />
+            </div>
+          </div>
+          <div className="mt-3 flex items-center justify-between text-xs font-semibold text-purple-800 pt-2 border-t border-purple-200/80">
+            <span>{leadCounts.pending > 0 ? `${leadCounts.pending} Pending Review` : 'Google Form Leads'}</span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </div>
         </Link>
