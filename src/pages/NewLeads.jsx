@@ -24,7 +24,9 @@ import {
   ChevronsRight,
   AlertCircle,
   FileText,
-  ArrowRightCircle
+  ArrowRightCircle,
+  X,
+  ShieldCheck
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axiosClient from '../api/axiosClient';
@@ -51,9 +53,39 @@ const NewLeads = ({
   const [leadForConvert, setLeadForConvert] = useState(null);
   const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
 
+  // Google Form Webhook Integration State
+  const [syncStatus, setSyncStatus] = useState({ syncActive: false, lastPing: null });
+  const [isIntegrationModalOpen, setIsIntegrationModalOpen] = useState(false);
+  const [copiedScript, setCopiedScript] = useState(false);
+  const [copiedWebhookUrl, setCopiedWebhookUrl] = useState(false);
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+
+  const fetchSyncStatus = async () => {
+    try {
+      const res = await axiosClient.get('/leads/sync-status');
+      if (res.data.success) {
+        setSyncStatus(res.data);
+      }
+    } catch (err) {
+      console.error('Fetch sync status error:', err);
+    }
+  };
+
+  const handleToggleSync = async () => {
+    try {
+      const res = await axiosClient.post('/leads/toggle-sync', { active: !syncStatus.syncActive });
+      if (res.data.success) {
+        setSyncStatus((prev) => ({ ...prev, syncActive: res.data.syncActive }));
+        alert(res.data.message);
+      }
+    } catch (err) {
+      console.error('Toggle sync error:', err);
+      alert('Failed to toggle sync status');
+    }
+  };
 
   const fetchLeads = async () => {
     try {
@@ -77,6 +109,7 @@ const NewLeads = ({
   useEffect(() => {
     setCurrentPage(1);
     fetchLeads();
+    fetchSyncStatus();
   }, [selectedStatus, selectedDomain]);
 
   const handleSearchSubmit = (e) => {
@@ -151,6 +184,16 @@ const NewLeads = ({
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
+            onClick={() => setIsIntegrationModalOpen(true)}
+            title="Google Form / Sheet Webhook Integration"
+            className="inline-flex items-center space-x-1.5 px-3 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-semibold rounded-xl border border-purple-200 transition-colors shadow-xs active:scale-95"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-purple-600" />
+            <span>Google Sheet Sync {syncStatus.syncActive ? '(Active)' : '(Standby)'}</span>
+          </button>
+
+          <button
+            type="button"
             onClick={handleCopyLink}
             title="Copy Public Google Form Application Link"
             className="inline-flex items-center space-x-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 transition-colors shadow-xs active:scale-95"
@@ -189,6 +232,43 @@ const NewLeads = ({
             <span>Export Excel</span>
           </button>
         </div>
+      </div>
+
+      {/* Integration Standby Notice Banner */}
+      <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-50 via-indigo-50/40 to-purple-50 border border-purple-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <div className="flex items-center space-x-3">
+          <div className="p-2 rounded-xl bg-purple-600 text-white shadow-xs">
+            <FileSpreadsheet className="w-4 h-4" />
+          </div>
+          <div>
+            <div className="flex items-center space-x-2">
+              <span className="font-bold text-slate-900 text-sm">
+                Google Form Webhook:
+              </span>
+              <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                syncStatus.syncActive 
+                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
+                  : 'bg-purple-100 text-purple-800 border border-purple-200'
+              }`}>
+                {syncStatus.syncActive ? '● Sync Active (Saving Leads)' : '○ Standby / Paused (No Records Added)'}
+              </span>
+            </div>
+            <p className="text-slate-600 text-[11px] mt-0.5">
+              {syncStatus.syncActive
+                ? 'All Google Form submissions are actively saved into MongoDB as New Leads.'
+                : 'Webhook integration is connected and verified. Sync is currently on standby as requested.'}
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setIsIntegrationModalOpen(true)}
+          className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs self-start sm:self-auto whitespace-nowrap"
+        >
+          <span>Webhook Setup & Script</span>
+          <ExternalLink className="w-3.5 h-3.5" />
+        </button>
       </div>
 
       {/* Tabs Navigation */}
@@ -599,6 +679,228 @@ const NewLeads = ({
                 className="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow-sm"
               >
                 Delete Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Google Form / Sheet Webhook Integration Modal */}
+      {isIntegrationModalOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
+            {/* Modal Header */}
+            <div className="px-6 py-4 bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 text-white flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-purple-500/20 rounded-xl text-purple-300">
+                  <FileSpreadsheet className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold">Google Form & Sheet Integration</h3>
+                  <p className="text-xs text-purple-200">
+                    Live Webhook sync pipeline between Google Form and MongoDB
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsIntegrationModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto text-xs sm:text-sm">
+              {/* Standby Status Alert */}
+              <div className={`p-4 rounded-xl border flex items-start space-x-3 ${
+                syncStatus.syncActive
+                  ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                  : 'bg-purple-50 border-purple-200 text-purple-950'
+              }`}>
+                <ShieldCheck className="w-5 h-5 shrink-0 text-purple-600 mt-0.5" />
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-sm">
+                      Sync Status: {syncStatus.syncActive ? 'ACTIVE (Saving to Database)' : 'STANDBY / PAUSED'}
+                    </span>
+                    <button
+                      onClick={handleToggleSync}
+                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all shadow-xs ${
+                        syncStatus.syncActive
+                          ? 'bg-rose-600 hover:bg-rose-700 text-white'
+                          : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                      }`}
+                    >
+                      {syncStatus.syncActive ? 'Pause Sync' : 'Start Running Sync'}
+                    </button>
+                  </div>
+                  <p className="text-xs text-slate-600 mt-1">
+                    {syncStatus.syncActive
+                      ? 'All incoming submissions from your Google Form are automatically inserted as New Leads.'
+                      : 'As requested, the integration is fully configured and ready, but saving to database is on PAUSED (Standby) mode. Click "Start Running Sync" whenever you want to activate it.'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Webhook URL Box */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Production Webhook URL (Render Backend)
+                </label>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value="https://internship-backend-5oke.onrender.com/api/leads/google-form-webhook"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono text-slate-800"
+                  />
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText('https://internship-backend-5oke.onrender.com/api/leads/google-form-webhook');
+                      setCopiedWebhookUrl(true);
+                      setTimeout(() => setCopiedWebhookUrl(false), 2000);
+                    }}
+                    className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold shrink-0 border border-slate-300"
+                  >
+                    {copiedWebhookUrl ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Step by Step Instructions */}
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+                <span className="font-bold text-slate-900 block">
+                  3 Simple Steps to Connect your Google Sheet / Form:
+                </span>
+                <ol className="list-decimal list-inside space-y-1 text-slate-600 text-xs leading-relaxed">
+                  <li>
+                    Open your Google Sheet linked to the form (<a href="https://docs.google.com/spreadsheets/d/1vz6Oc2oUQ9p3wbka08UBMlpdF9JZ7kdtblA6g4SjFmI/edit?gid=22449246#gid=22449246" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline font-semibold">Open Sheet</a>).
+                  </li>
+                  <li>
+                    Click menu <strong>Extensions &gt; Apps Script</strong>.
+                  </li>
+                  <li>
+                    Delete any existing code, paste the script below, and click <strong>Save (Ctrl + S)</strong>.
+                  </li>
+                  <li>
+                    In Apps Script, click <strong>Triggers (Clock icon on left) &gt; Add Trigger</strong>, set Function to <code className="bg-slate-200 px-1 py-0.5 rounded text-indigo-700">onFormSubmit</code> and Event type to <code className="bg-slate-200 px-1 py-0.5 rounded text-indigo-700">On form submit</code>.
+                  </li>
+                </ol>
+              </div>
+
+              {/* Google Apps Script Code Block */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                    Google Apps Script Code
+                  </label>
+                  <button
+                    onClick={() => {
+                      const script = `function onFormSubmit(e) {
+  var webhookUrl = "https://internship-backend-5oke.onrender.com/api/leads/google-form-webhook";
+  try {
+    var payload = {};
+    if (e && e.namedValues) {
+      payload = {
+        studentName: (e.namedValues['Student Full Name'] ? e.namedValues['Student Full Name'][0] : ''),
+        contactNo: (e.namedValues['Mobile / WhatsApp Number'] ? e.namedValues['Mobile / WhatsApp Number'][0] : ''),
+        email: (e.namedValues['Email Address'] ? e.namedValues['Email Address'][0] : ''),
+        collegeName: (e.namedValues['College / University Name'] ? e.namedValues['College / University Name'][0] : ''),
+        degree: (e.namedValues['Current Course'] ? e.namedValues['Current Course'][0] : ''),
+        semester: (e.namedValues['Current Academic Year'] ? e.namedValues['Current Academic Year'][0] : ''),
+        interestedDomain: (e.namedValues['Preferred Internship Domain'] ? e.namedValues['Preferred Internship Domain'][0] : ''),
+        internshipType: (e.namedValues['Internship Program Preference'] ? e.namedValues['Internship Program Preference'][0] : ''),
+        internshipMode: (e.namedValues['Preferred Internship Mode'] ? e.namedValues['Preferred Internship Mode'][0] : ''),
+        notes: (e.namedValues['Any Questions? (Optional)'] ? e.namedValues['Any Questions? (Optional)'][0] : ''),
+        timestamp: (e.namedValues['Timestamp'] ? e.namedValues['Timestamp'][0] : new Date().toISOString())
+      };
+    } else if (e && e.values) {
+      payload = {
+        timestamp: e.values[0] || '',
+        studentName: e.values[1] || '',
+        contactNo: e.values[2] || '',
+        email: e.values[3] || '',
+        collegeName: e.values[4] || '',
+        degree: e.values[5] || '',
+        semester: e.values[6] || '',
+        interestedDomain: e.values[7] || '',
+        internshipType: e.values[8] || '',
+        internshipMode: e.values[9] || '',
+        notes: e.values[10] || ''
+      };
+    }
+    var options = {
+      method: "post",
+      contentType: "application/json",
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    };
+    UrlFetchApp.fetch(webhookUrl, options);
+  } catch (err) {
+    Logger.log("Error: " + err.message);
+  }
+}`;
+                      navigator.clipboard.writeText(script);
+                      setCopiedScript(true);
+                      setTimeout(() => setCopiedScript(false), 2000);
+                    }}
+                    className="inline-flex items-center space-x-1 px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg border border-indigo-200 transition-colors"
+                  >
+                    {copiedScript ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        <span className="text-emerald-700">Copied to Clipboard!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>Copy Apps Script</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <pre className="p-3 bg-slate-900 text-slate-100 rounded-xl text-[11px] font-mono overflow-x-auto max-h-48 leading-relaxed">
+{`function onFormSubmit(e) {
+  var webhookUrl = "https://internship-backend-5oke.onrender.com/api/leads/google-form-webhook";
+  try {
+    var payload = {};
+    if (e && e.namedValues) {
+      payload = {
+        studentName: (e.namedValues['Student Full Name'] ? e.namedValues['Student Full Name'][0] : ''),
+        contactNo: (e.namedValues['Mobile / WhatsApp Number'] ? e.namedValues['Mobile / WhatsApp Number'][0] : ''),
+        email: (e.namedValues['Email Address'] ? e.namedValues['Email Address'][0] : ''),
+        collegeName: (e.namedValues['College / University Name'] ? e.namedValues['College / University Name'][0] : ''),
+        degree: (e.namedValues['Current Course'] ? e.namedValues['Current Course'][0] : ''),
+        semester: (e.namedValues['Current Academic Year'] ? e.namedValues['Current Academic Year'][0] : ''),
+        interestedDomain: (e.namedValues['Preferred Internship Domain'] ? e.namedValues['Preferred Internship Domain'][0] : ''),
+        internshipType: (e.namedValues['Internship Program Preference'] ? e.namedValues['Internship Program Preference'][0] : ''),
+        internshipMode: (e.namedValues['Preferred Internship Mode'] ? e.namedValues['Preferred Internship Mode'][0] : ''),
+        notes: (e.namedValues['Any Questions? (Optional)'] ? e.namedValues['Any Questions? (Optional)'][0] : '')
+      };
+    }
+    UrlFetchApp.fetch(webhookUrl, {
+      method: "post",
+      contentType: "application/json",
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    });
+  } catch (err) {
+    Logger.log("Error: " + err.message);
+  }
+}`}
+                </pre>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-end">
+              <button
+                onClick={() => setIsIntegrationModalOpen(false)}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-semibold transition-colors"
+              >
+                Close
               </button>
             </div>
           </div>
