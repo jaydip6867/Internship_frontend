@@ -23,10 +23,13 @@ import {
   ChevronsLeft, 
   ChevronsRight,
   AlertCircle,
-  FileText
+  FileText,
+  ArrowRightCircle
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import axiosClient from '../api/axiosClient';
 import GoogleFormView from '../components/GoogleFormView';
+import ConvertLeadModal from '../components/ConvertLeadModal';
 import { exportInquiriesToExcel } from '../utils/excelUtils';
 
 const NewLeads = ({ 
@@ -44,6 +47,10 @@ const NewLeads = ({
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [copiedLink, setCopiedLink] = useState(false);
 
+  // Convert to Inquiry Modal State
+  const [leadForConvert, setLeadForConvert] = useState(null);
+  const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -56,7 +63,7 @@ const NewLeads = ({
       if (selectedStatus !== 'All') params.status = selectedStatus;
       if (selectedDomain !== 'All') params.domain = selectedDomain;
 
-      const res = await axiosClient.get('/inquiries/leads', { params });
+      const res = await axiosClient.get('/leads', { params });
       if (res.data.success) {
         setLeads(res.data.leads || []);
       }
@@ -80,13 +87,18 @@ const NewLeads = ({
 
   const handleDelete = async (id) => {
     try {
-      await axiosClient.delete(`/inquiries/${id}`);
+      await axiosClient.delete(`/leads/${id}`);
       setDeleteConfirmId(null);
       fetchLeads();
     } catch (err) {
       console.error(err);
       alert('Failed to delete lead');
     }
+  };
+
+  const handleOpenConvertLead = (lead) => {
+    setLeadForConvert(lead);
+    setIsConvertModalOpen(true);
   };
 
   const handleCopyLink = () => {
@@ -99,15 +111,13 @@ const NewLeads = ({
 
   const handleFormSubmitted = () => {
     fetchLeads();
-    // Switch to list tab to see the newly submitted lead!
     setActiveTab('list');
   };
 
   // Stats
   const totalLeads = leads.length;
-  const newLeadsCount = leads.filter((l) => l.status === 'New').length;
-  const followupCount = leads.filter((l) => l.status === 'Follow-up' || l.status === 'Interested').length;
-  const convertedCount = leads.filter((l) => l.status === 'Converted to Admission' || l.isConverted).length;
+  const newLeadsCount = leads.filter((l) => l.status === 'New Lead' || !l.isConvertedToInquiry).length;
+  const convertedToInquiryCount = leads.filter((l) => l.isConvertedToInquiry || l.status === 'Converted to Inquiry').length;
 
   // Filtered domains
   const availableDomains = Array.from(
@@ -121,23 +131,6 @@ const NewLeads = ({
   const endIndex = Math.min(startIndex + pageSize, totalRecords);
   const currentLeads = leads.slice(startIndex, endIndex);
 
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case 'New':
-        return 'bg-blue-50 text-blue-700 border-blue-200';
-      case 'Interested':
-        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-      case 'Follow-up':
-        return 'bg-amber-50 text-amber-700 border-amber-200';
-      case 'Converted to Admission':
-        return 'bg-purple-50 text-purple-700 border-purple-200';
-      case 'Not Interested':
-        return 'bg-rose-50 text-rose-700 border-rose-200';
-      default:
-        return 'bg-slate-50 text-slate-700 border-slate-200';
-    }
-  };
-
   return (
     <div className="space-y-6">
       {/* Top Header */}
@@ -150,7 +143,7 @@ const NewLeads = ({
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900">New Leads Management</h1>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Incoming student inquiries from Google Form, QR codes, and web applications
+            Incoming student inquiries from Google Form — Review & Convert directly into Official Inquiries
           </p>
         </div>
 
@@ -198,7 +191,7 @@ const NewLeads = ({
         </div>
       </div>
 
-      {/* Tabs Navigation: List View vs Google Form View */}
+      {/* Tabs Navigation */}
       <div className="flex border-b border-slate-200">
         <button
           onClick={() => setActiveTab('list')}
@@ -229,44 +222,34 @@ const NewLeads = ({
       {activeTab === 'list' && (
         <div className="space-y-5">
           {/* Metrics Summary Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
               <div>
-                <span className="text-xs text-slate-500 font-semibold uppercase">Total Leads</span>
-                <p className="text-xl font-bold text-slate-900 mt-0.5">{totalLeads}</p>
+                <span className="text-xs text-slate-500 font-semibold uppercase">Total Leads Received</span>
+                <p className="text-xl font-bold text-slate-900 mt-0.5">{totalLeads} Leads</p>
               </div>
               <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
                 <Users className="w-4 h-4" />
               </div>
             </div>
 
-            <div className="bg-white p-4 rounded-xl border border-blue-200/80 bg-blue-50/20 shadow-xs flex items-center justify-between">
-              <div>
-                <span className="text-xs text-blue-700 font-semibold uppercase">New (Uncontacted)</span>
-                <p className="text-xl font-bold text-blue-700 mt-0.5">{newLeadsCount}</p>
-              </div>
-              <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                <Clock className="w-4 h-4" />
-              </div>
-            </div>
-
             <div className="bg-white p-4 rounded-xl border border-amber-200/80 bg-amber-50/20 shadow-xs flex items-center justify-between">
               <div>
-                <span className="text-xs text-amber-700 font-semibold uppercase">In Follow-up</span>
-                <p className="text-xl font-bold text-amber-700 mt-0.5">{followupCount}</p>
+                <span className="text-xs text-amber-800 font-semibold uppercase">Pending / New Leads</span>
+                <p className="text-xl font-bold text-amber-700 mt-0.5">{newLeadsCount} Pending Review</p>
               </div>
               <div className="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
-                <PhoneCall className="w-4 h-4" />
+                <Clock className="w-4 h-4" />
               </div>
             </div>
 
             <div className="bg-white p-4 rounded-xl border border-emerald-200/80 bg-emerald-50/20 shadow-xs flex items-center justify-between">
               <div>
-                <span className="text-xs text-emerald-700 font-semibold uppercase">Admissions</span>
-                <p className="text-xl font-bold text-emerald-700 mt-0.5">{convertedCount}</p>
+                <span className="text-xs text-emerald-800 font-semibold uppercase">Converted into Inquiries</span>
+                <p className="text-xl font-bold text-emerald-700 mt-0.5">{convertedToInquiryCount} In Inquiries</p>
               </div>
               <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                <GraduationCap className="w-4 h-4" />
+                <CheckCircle2 className="w-4 h-4" />
               </div>
             </div>
           </div>
@@ -293,19 +276,17 @@ const NewLeads = ({
             <div className="flex items-center gap-2.5 shrink-0 overflow-x-auto pb-1 md:pb-0">
               <div className="flex items-center space-x-1.5 text-xs text-slate-500 shrink-0">
                 <Filter className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Filter:</span>
+                <span className="hidden sm:inline">Status:</span>
               </div>
               <select
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
                 className="px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
               >
-                <option value="All">All Statuses</option>
-                <option value="New">New</option>
-                <option value="Interested">Interested</option>
-                <option value="Follow-up">Follow-up</option>
-                <option value="Converted to Admission">Converted to Admission</option>
-                <option value="Not Interested">Not Interested</option>
+                <option value="All">All Leads</option>
+                <option value="New Lead">Pending Review</option>
+                <option value="Converted to Inquiry">Converted to Inquiry</option>
+                <option value="Rejected">Rejected</option>
               </select>
 
               <select
@@ -326,14 +307,14 @@ const NewLeads = ({
             {loading ? (
               <div className="p-12 text-center text-slate-500">
                 <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-                <p className="text-xs">Loading leads...</p>
+                <p className="text-xs">Loading leads from database...</p>
               </div>
             ) : leads.length === 0 ? (
               <div className="p-12 text-center text-slate-500">
                 <AlertCircle className="w-10 h-10 text-slate-300 mx-auto mb-2" />
                 <h3 className="font-semibold text-slate-700 text-sm">No Leads Found</h3>
                 <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-                  No responses received yet. You can submit one using the "Submit New Lead (Google Form)" tab or share your public form link.
+                  No responses received yet. You can submit one using the "Submit New Lead (Google Form)" tab or share your public form link with students.
                 </p>
                 <button
                   onClick={() => setActiveTab('form')}
@@ -352,9 +333,9 @@ const NewLeads = ({
                       <th className="px-4 py-3">Contact & WhatsApp</th>
                       <th className="px-4 py-3">College & Degree</th>
                       <th className="px-4 py-3">Interested Domain</th>
-                      <th className="px-4 py-3">Source & Location</th>
-                      <th className="px-3 py-3 text-center">Status</th>
-                      <th className="px-2 py-3 text-center w-14">Actions</th>
+                      <th className="px-4 py-3">Location & Batch</th>
+                      <th className="px-4 py-3 text-center">Inquiry Action</th>
+                      <th className="px-3 py-3 text-center w-14">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -381,7 +362,7 @@ const NewLeads = ({
 
                           {/* 3. Contact & Quick Action */}
                           <td className="px-4 py-3">
-                            <div className="flex items-center space-x-1.5 font-medium text-slate-700">
+                            <div className="font-medium text-slate-700">
                               <span>{lead.contactNo}</span>
                             </div>
                             <div className="flex items-center space-x-2 mt-1">
@@ -424,82 +405,49 @@ const NewLeads = ({
                             </span>
                           </td>
 
-                          {/* 6. Source & Location */}
+                          {/* 6. Location & Batch */}
                           <td className="px-4 py-3">
-                            <span className="inline-flex items-center space-x-1 text-xs font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200">
-                              <span>Google Form</span>
+                            <span className="font-medium text-slate-800 block text-xs">
+                              {lead.city || 'Surat'}
                             </span>
-                            {lead.notes && (
-                              <p className="text-[11px] text-slate-500 mt-1 line-clamp-1 max-w-[180px]" title={lead.notes}>
-                                {lead.notes}
-                              </p>
+                            <span className="text-[11px] text-slate-400 block mt-0.5 truncate max-w-[160px]">
+                              {lead.preferredBatch || lead.duration || 'Standard'}
+                            </span>
+                          </td>
+
+                          {/* 7. Inquiry Action: Set to Inquiry vs Already In Inquiry */}
+                          <td className="px-4 py-3 text-center">
+                            {lead.isConvertedToInquiry ? (
+                              <div className="flex flex-col items-center space-y-0.5">
+                                <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold whitespace-nowrap shadow-xs">
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                  <span>In Inquiries</span>
+                                </span>
+                                <span className="text-[10px] text-slate-500 font-medium">
+                                  Assigned: {lead.assignedTo || 'Haresh Sir'}
+                                </span>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => handleOpenConvertLead(lead)}
+                                className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm shadow-indigo-300 transition-all active:scale-95 whitespace-nowrap"
+                                title="Click to move this student into Inquiries"
+                              >
+                                <span>Set to Inquiry</span>
+                                <ArrowRightCircle className="w-3.5 h-3.5" />
+                              </button>
                             )}
                           </td>
 
-                          {/* 7. Status */}
-                          <td className="px-3 py-3 text-center">
-                            <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-semibold border whitespace-nowrap ${getStatusBadge(lead.status)}`}>
-                              {lead.status}
-                            </span>
-                          </td>
-
-                          {/* 8. Actions (Up-Down stacked) */}
-                          <td className="px-2 py-2 text-center w-14 align-middle">
-                            <div className="flex flex-col gap-1 items-center justify-center mx-auto w-max">
-                              {/* Row 1: View Details & Follow-up */}
-                              <div className="flex items-center gap-1">
-                                <button
-                                  onClick={() => onOpenDetails(lead)}
-                                  title="View Details"
-                                  className="p-1 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors border border-slate-200"
-                                >
-                                  <Eye className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  onClick={() => onOpenFollowup(lead)}
-                                  title="Add Follow-up"
-                                  className="p-1 text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors border border-slate-200"
-                                >
-                                  <PhoneCall className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-
-                              {/* Row 2: Convert to Admission & Edit */}
-                              <div className="flex items-center gap-1">
-                                {lead.isConverted || lead.status === 'Converted to Admission' ? (
-                                  <span
-                                    title="Already Converted to Admission"
-                                    className="p-1 text-emerald-600 bg-emerald-50 rounded-md border border-emerald-200 cursor-default"
-                                  >
-                                    <CheckCircle2 className="w-3.5 h-3.5" />
-                                  </span>
-                                ) : (
-                                  <button
-                                    onClick={() => onOpenConvert(lead)}
-                                    title="Convert to Admission"
-                                    className="p-1 text-slate-600 hover:text-purple-600 hover:bg-purple-50 rounded-md transition-colors border border-slate-200"
-                                  >
-                                    <CheckCircle2 className="w-3.5 h-3.5" />
-                                  </button>
-                                )}
-                                <button
-                                  onClick={() => onOpenEditInquiry(lead)}
-                                  title="Edit Lead"
-                                  className="p-1 text-slate-600 hover:text-amber-600 hover:bg-amber-50 rounded-md transition-colors border border-slate-200"
-                                >
-                                  <Edit className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-
-                              {/* Row 3: Delete */}
-                              <button
-                                onClick={() => setDeleteConfirmId(lead._id)}
-                                title="Delete Lead"
-                                className="w-full p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors border border-slate-200 flex items-center justify-center"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </button>
-                            </div>
+                          {/* 8. Action: Delete / Remove */}
+                          <td className="px-2 py-3 text-center align-middle">
+                            <button
+                              onClick={() => setDeleteConfirmId(lead._id)}
+                              title="Delete Lead"
+                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-slate-200"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                           </td>
                         </tr>
                       );
@@ -599,6 +547,19 @@ const NewLeads = ({
 
           <GoogleFormView onSuccess={handleFormSubmitted} isEmbedded={true} />
         </div>
+      )}
+
+      {/* Convert Lead to Inquiry Modal */}
+      {isConvertModalOpen && (
+        <ConvertLeadModal
+          isOpen={isConvertModalOpen}
+          onClose={() => {
+            setIsConvertModalOpen(false);
+            setLeadForConvert(null);
+          }}
+          lead={leadForConvert}
+          onSuccess={fetchLeads}
+        />
       )}
 
       {/* Delete Confirmation Modal */}

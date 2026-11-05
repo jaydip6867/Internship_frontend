@@ -126,11 +126,11 @@ const GoogleFormView = ({ onSuccess, isEmbedded = false }) => {
 
     try {
       setLoading(true);
-      const res = await axiosClient.post('/inquiries/public-lead', formData);
+      const res = await axiosClient.post('/leads/public', formData);
       if (res.data.success) {
         setSubmitted(true);
-        setSubmittedData(res.data.inquiry);
-        onSuccess?.(res.data.inquiry);
+        setSubmittedData(res.data.lead);
+        onSuccess?.(res.data.lead);
       }
     } catch (err) {
       console.error('Lead submission error:', err);
