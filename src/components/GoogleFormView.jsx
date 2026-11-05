@@ -51,19 +51,22 @@ const SEMESTERS = [
   'Graduate / Completed'
 ];
 
-const BATCH_TIMINGS = [
-  'Morning (9:00 AM - 1:00 PM)',
-  'Afternoon (2:00 PM - 6:00 PM)',
-  'Evening (6:00 PM - 8:00 PM)',
-  'Full Day (10:00 AM - 6:00 PM)',
-  'Flexible'
-];
-
-const DURATIONS = [
-  '3 Months (Project Based)',
-  '6 Months (Full Live Project Internship)',
-  '1 Year (Comprehensive Program)',
-  '1 Month (Fast Track)'
+const INTERNSHIP_TYPES = [
+  {
+    value: 'free (interview crack mandatory.)',
+    label: 'free (interview crack mandatory.)',
+    description: '100% Free internship upon successfully clearing our technical interview & aptitude test'
+  },
+  {
+    value: 'paid',
+    label: 'paid',
+    description: 'Guaranteed live project internship with direct mentor guidance and certification'
+  },
+  {
+    value: 'not decide - guidance',
+    label: 'not decide - guidance',
+    description: 'Need counseling guidance from faculty to decide what suits best for career'
+  }
 ];
 
 const GoogleFormView = ({ onSuccess, isEmbedded = false }) => {
@@ -77,8 +80,7 @@ const GoogleFormView = ({ onSuccess, isEmbedded = false }) => {
     semester: '6th Semester',
     interestedDomain: 'Full Stack Web Development (MERN)',
     city: 'Surat',
-    preferredBatch: 'Morning (9:00 AM - 1:00 PM)',
-    duration: '6 Months (Full Live Project Internship)',
+    internshipType: 'free (interview crack mandatory.)',
     notes: '',
   });
 
@@ -103,8 +105,7 @@ const GoogleFormView = ({ onSuccess, isEmbedded = false }) => {
       semester: '6th Semester',
       interestedDomain: 'Full Stack Web Development (MERN)',
       city: 'Surat',
-      preferredBatch: 'Morning (9:00 AM - 1:00 PM)',
-      duration: '6 Months (Full Live Project Internship)',
+      internshipType: 'free (interview crack mandatory.)',
       notes: '',
     });
     setError('');
@@ -167,6 +168,9 @@ const GoogleFormView = ({ onSuccess, isEmbedded = false }) => {
               <p><strong className="text-slate-900">Student Name:</strong> {submittedData.studentName}</p>
               <p><strong className="text-slate-900">Contact Number:</strong> {submittedData.contactNo}</p>
               <p><strong className="text-slate-900">Domain / Track:</strong> {submittedData.interestedDomain}</p>
+              {submittedData.internshipType && (
+                <p><strong className="text-slate-900">Internship Option:</strong> <span className="font-semibold text-indigo-700">{submittedData.internshipType}</span></p>
+              )}
               <p><strong className="text-slate-900">Status:</strong> <span className="text-emerald-700 font-semibold">New Lead (Registered)</span></p>
             </div>
           )}
@@ -372,45 +376,51 @@ const GoogleFormView = ({ onSuccess, isEmbedded = false }) => {
           </div>
         </div>
 
-        {/* Card 6: Preferred Timings & Duration */}
+        {/* Card 6: Internship Option / Preference */}
         <div className="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-5 sm:p-6 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center">
-                <Clock className="w-3.5 h-3.5 mr-1 text-slate-400" />
-                Preferred Batch Time
-              </label>
-              <select
-                name="preferredBatch"
-                value={formData.preferredBatch}
-                onChange={handleChange}
-                className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-white"
-              >
-                {BATCH_TIMINGS.map((time) => (
-                  <option key={time} value={time}>{time}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center">
-                <Building2 className="w-3.5 h-3.5 mr-1 text-slate-400" />
-                Internship Duration
-              </label>
-              <select
-                name="duration"
-                value={formData.duration}
-                onChange={handleChange}
-                className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-white"
-              >
-                {DURATIONS.map((dur) => (
-                  <option key={dur} value={dur}>{dur}</option>
-                ))}
-              </select>
-            </div>
+          <div>
+            <label className="block text-sm sm:text-base font-semibold text-slate-900">
+              Internship Option / Preference <span className="text-rose-500">*</span>
+            </label>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Select which category you are applying for
+            </p>
           </div>
 
-          <div className="pt-2">
+          <div className="space-y-2.5 pt-1">
+            {INTERNSHIP_TYPES.map((type) => {
+              const isSelected = formData.internshipType === type.value;
+              return (
+                <label
+                  key={type.value}
+                  className={`flex items-start space-x-3 p-3.5 rounded-xl border cursor-pointer transition-all ${
+                    isSelected
+                      ? 'border-indigo-600 bg-indigo-50/50 shadow-xs ring-1 ring-indigo-500/20'
+                      : 'border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="internshipType"
+                    value={type.value}
+                    checked={isSelected}
+                    onChange={handleChange}
+                    className="w-4 h-4 mt-0.5 text-indigo-600 border-slate-300 focus:ring-indigo-500"
+                  />
+                  <div className="flex-1">
+                    <span className="text-xs sm:text-sm text-slate-900 font-bold block">
+                      {type.label}
+                    </span>
+                    <span className="text-[11px] text-slate-500 block mt-0.5 leading-snug">
+                      {type.description}
+                    </span>
+                  </div>
+                </label>
+              );
+            })}
+          </div>
+
+          <div className="pt-3 border-t border-slate-100">
             <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center">
               <MapPin className="w-3.5 h-3.5 mr-1 text-slate-400" />
               Current City / Area

@@ -137,6 +137,11 @@ const ConvertLeadModal = ({ isOpen, onClose, lead, onSuccess }) => {
           <div>
             <span className="font-bold text-slate-900 block text-sm">{lead.studentName}</span>
             <span className="text-slate-500">{lead.contactNo} • {lead.collegeName || 'No college'}</span>
+            {lead.internshipType && (
+              <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                Option: {lead.internshipType}
+              </span>
+            )}
           </div>
           <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-purple-100 text-purple-800 border border-purple-200">
             Source: Google Form

@@ -333,7 +333,7 @@ const NewLeads = ({
                       <th className="px-4 py-3">Contact & WhatsApp</th>
                       <th className="px-4 py-3">College & Degree</th>
                       <th className="px-4 py-3">Interested Domain</th>
-                      <th className="px-4 py-3">Location & Batch</th>
+                      <th className="px-4 py-3">Option & City</th>
                       <th className="px-4 py-3 text-center">Inquiry Action</th>
                       <th className="px-3 py-3 text-center w-14">Actions</th>
                     </tr>
@@ -405,13 +405,27 @@ const NewLeads = ({
                             </span>
                           </td>
 
-                          {/* 6. Location & Batch */}
+                          {/* 6. Option & City */}
                           <td className="px-4 py-3">
-                            <span className="font-medium text-slate-800 block text-xs">
-                              {lead.city || 'Surat'}
-                            </span>
-                            <span className="text-[11px] text-slate-400 block mt-0.5 truncate max-w-[160px]">
-                              {lead.preferredBatch || lead.duration || 'Standard'}
+                            {lead.internshipType ? (
+                              <span
+                                className={`inline-block px-2 py-0.5 rounded-md text-[11px] font-bold ${
+                                  lead.internshipType.toLowerCase().includes('free')
+                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                    : lead.internshipType.toLowerCase().includes('paid')
+                                    ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                                    : 'bg-amber-50 text-amber-700 border border-amber-200'
+                                }`}
+                              >
+                                {lead.internshipType}
+                              </span>
+                            ) : (
+                              <span className="text-[11px] text-slate-500 font-medium">
+                                {lead.preferredBatch || lead.duration || 'Standard'}
+                              </span>
+                            )}
+                            <span className="text-[11px] text-slate-500 block mt-0.5 truncate max-w-[160px]">
+                              📍 {lead.city || 'Surat'}
                             </span>
                           </td>
 
