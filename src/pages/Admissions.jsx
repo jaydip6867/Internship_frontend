@@ -14,10 +14,15 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
-  ChevronsRight
+  ChevronsRight,
+  Upload,
+  Download,
+  FileDown
 } from 'lucide-react';
 import axiosClient from '../api/axiosClient';
 import EditAdmissionModal from '../components/EditAdmissionModal';
+import ImportAdmissionModal from '../components/ImportAdmissionModal';
+import { exportAdmissionsToExcel, downloadSampleAdmissionTemplate } from '../utils/excelUtils';
 
 const Admissions = ({ onOpenAdmissionDetails }) => {
   const [admissions, setAdmissions] = useState([]);
@@ -27,6 +32,7 @@ const Admissions = ({ onOpenAdmissionDetails }) => {
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [editingAdmission, setEditingAdmission] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -101,12 +107,46 @@ const Admissions = ({ onOpenAdmissionDetails }) => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Enrolled Admissions</h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
             Manage registered students, batches, installment collections & receipts
           </p>
+        </div>
+
+        {/* Action Buttons: Sample Template, Import Excel, Export Excel */}
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={downloadSampleAdmissionTemplate}
+            title="Download Sample Admission Excel Template"
+            className="inline-flex items-center space-x-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 transition-colors shadow-xs active:scale-95"
+          >
+            <FileDown className="w-3.5 h-3.5 text-slate-500" />
+            <span className="hidden sm:inline">Sample Template</span>
+            <span className="sm:hidden">Sample</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsImportModalOpen(true)}
+            title="Import Admissions from Excel File"
+            className="inline-flex items-center space-x-1.5 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-xl border border-emerald-200 transition-colors shadow-xs active:scale-95"
+          >
+            <Upload className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Import Excel</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => exportAdmissionsToExcel(admissions)}
+            title="Export Admissions to Excel File"
+            className="inline-flex items-center space-x-1.5 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold rounded-xl border border-blue-200 transition-colors shadow-xs active:scale-95"
+          >
+            <Download className="w-3.5 h-3.5 text-blue-600" />
+            <span>Export Excel</span>
+          </button>
         </div>
       </div>
 
@@ -410,6 +450,15 @@ const Admissions = ({ onOpenAdmissionDetails }) => {
             setEditingAdmission(null);
           }}
           admission={editingAdmission}
+          onSuccess={fetchAdmissions}
+        />
+      )}
+
+      {/* Import Admission Modal */}
+      {isImportModalOpen && (
+        <ImportAdmissionModal
+          isOpen={isImportModalOpen}
+          onClose={() => setIsImportModalOpen(false)}
           onSuccess={fetchAdmissions}
         />
       )}

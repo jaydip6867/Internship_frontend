@@ -17,9 +17,15 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
-  ChevronsRight
+  ChevronsRight,
+  Upload,
+  Download,
+  FileSpreadsheet,
+  FileDown
 } from 'lucide-react';
 import axiosClient from '../api/axiosClient';
+import { exportInquiriesToExcel, downloadSampleInquiryTemplate } from '../utils/excelUtils';
+import ImportInquiryModal from '../components/ImportInquiryModal';
 
 const Inquiries = ({ 
   onOpenAddInquiry, 
@@ -34,6 +40,7 @@ const Inquiries = ({
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [selectedDomain, setSelectedDomain] = useState('All');
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -144,20 +151,56 @@ const Inquiries = ({
   return (
     <div className="space-y-6">
       {/* Header & Page Title */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Inquiry Management</h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
             Track student inquiries, manage follow-ups, and convert admissions
           </p>
         </div>
-        <button
-          onClick={onOpenAddInquiry}
-          className="inline-flex items-center space-x-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm shadow-indigo-300 transition-all active:scale-95 self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add New Inquiry</span>
-        </button>
+
+        {/* Action Buttons: Sample Template, Import Excel, Export Excel, Add Inquiry */}
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={downloadSampleInquiryTemplate}
+            title="Download Sample Excel Template for Import"
+            className="inline-flex items-center space-x-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 transition-colors shadow-xs active:scale-95"
+          >
+            <FileDown className="w-3.5 h-3.5 text-slate-500" />
+            <span className="hidden sm:inline">Sample Template</span>
+            <span className="sm:hidden">Sample</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsImportModalOpen(true)}
+            title="Import Inquiries from Excel File"
+            className="inline-flex items-center space-x-1.5 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-xl border border-emerald-200 transition-colors shadow-xs active:scale-95"
+          >
+            <Upload className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Import Excel</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => exportInquiriesToExcel(inquiries)}
+            title="Export Inquiries to Excel File"
+            className="inline-flex items-center space-x-1.5 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold rounded-xl border border-blue-200 transition-colors shadow-xs active:scale-95"
+          >
+            <Download className="w-3.5 h-3.5 text-blue-600" />
+            <span>Export Excel</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onOpenAddInquiry}
+            className="inline-flex items-center space-x-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm shadow-indigo-300 transition-all active:scale-95"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Inquiry</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter and Search Bar */}
@@ -498,6 +541,15 @@ const Inquiries = ({
           </div>
         )}
       </div>
+
+      {/* Import Inquiry Modal */}
+      {isImportModalOpen && (
+        <ImportInquiryModal
+          isOpen={isImportModalOpen}
+          onClose={() => setIsImportModalOpen(false)}
+          onSuccess={fetchInquiries}
+        />
+      )}
 
       {/* Delete Confirmation Modal */}
       {deleteConfirmId && (
