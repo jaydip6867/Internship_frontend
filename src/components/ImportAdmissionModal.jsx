@@ -68,7 +68,23 @@ const ImportAdmissionModal = ({ isOpen, onClose, onSuccess }) => {
         const invalid = [];
 
         rawJson.forEach((row, idx) => {
-          const studentName = String(
+          const rawContact = row['Contact Number'] || 
+            row['CONTACT NO.'] || 
+            row['CONTACT NO'] || 
+            row['Contact No'] || 
+            row['Phone'] || 
+            row['Mobile'] || 
+            row['contactNo'] || 
+            '';
+
+          let contactNo = String(rawContact).trim().replace(/\.0+$/, '').replace(/[^0-9]/g, '');
+          if (contactNo.length === 12 && contactNo.startsWith('91')) {
+            contactNo = contactNo.slice(2);
+          } else if (contactNo.length === 11 && contactNo.startsWith('0')) {
+            contactNo = contactNo.slice(1);
+          }
+
+          const rawName = String(
             row['Student Name'] || 
             row['NAME'] || 
             row['Name'] || 
@@ -76,17 +92,9 @@ const ImportAdmissionModal = ({ isOpen, onClose, onSuccess }) => {
             ''
           ).trim();
 
-          const contactNo = String(
-            row['Contact Number'] || 
-            row['CONTACT NO.'] || 
-            row['CONTACT NO'] || 
-            row['Contact No'] || 
-            row['Phone'] || 
-            row['contactNo'] || 
-            ''
-          ).trim();
+          const studentName = rawName || (contactNo ? `Student - ${contactNo.slice(-4)}` : '');
 
-          if (studentName && contactNo) {
+          if (contactNo) {
             const totalFees = Number(row['Total Fees'] || row['totalFees'] || 15000);
             const paidFees = Number(row['Paid Fees'] || row['paidFees'] || 5000);
 
@@ -112,7 +120,7 @@ const ImportAdmissionModal = ({ isOpen, onClose, onSuccess }) => {
           } else {
             invalid.push({
               _rowNum: idx + 2,
-              reason: !studentName ? 'Missing Student Name' : 'Missing Contact Number',
+              reason: 'Missing Contact/Mobile Number',
               row,
             });
           }

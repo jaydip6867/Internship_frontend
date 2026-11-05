@@ -67,8 +67,26 @@ const ImportInquiryModal = ({ isOpen, onClose, onSuccess }) => {
         const invalid = [];
 
         rawJson.forEach((row, idx) => {
-          // Normalize column names
-          const studentName = String(
+          // Normalize contact number
+          const rawContact = row['Contact Number'] || 
+            row['CONTACT NO.'] || 
+            row['CONTACT NO'] || 
+            row['Contact No'] || 
+            row['Phone'] || 
+            row['Mobile'] || 
+            row['contactNo'] || 
+            '';
+
+          // Clean phone: remove .0, spaces, +91
+          let contactNo = String(rawContact).trim().replace(/\.0+$/, '').replace(/[^0-9]/g, '');
+          if (contactNo.length === 12 && contactNo.startsWith('91')) {
+            contactNo = contactNo.slice(2);
+          } else if (contactNo.length === 11 && contactNo.startsWith('0')) {
+            contactNo = contactNo.slice(1);
+          }
+
+          // Normalize student name (fallback if empty)
+          const rawName = String(
             row['Student Name'] || 
             row['NAME'] || 
             row['NAME '] || 
@@ -77,17 +95,10 @@ const ImportInquiryModal = ({ isOpen, onClose, onSuccess }) => {
             ''
           ).trim();
 
-          const contactNo = String(
-            row['Contact Number'] || 
-            row['CONTACT NO.'] || 
-            row['CONTACT NO'] || 
-            row['Contact No'] || 
-            row['Phone'] || 
-            row['contactNo'] || 
-            ''
-          ).trim();
+          const studentName = rawName || (contactNo ? `Student - ${contactNo.slice(-4)}` : '');
 
-          if (studentName && contactNo) {
+          // If contact number is present, row is valid even if other fields are empty!
+          if (contactNo) {
             valid.push({
               studentName,
               contactNo,
@@ -105,7 +116,7 @@ const ImportInquiryModal = ({ isOpen, onClose, onSuccess }) => {
                 'Full Stack Web Development (MERN)'
               ).trim(),
               takenBy: String(row['Taken By'] || row['TAKEN BY'] || row['TAKEN BY '] || row['Counselor'] || row['takenBy'] || 'Haresh Sir').trim(),
-              status: String(row['Status'] || row['STATUS'] || row['status'] || 'New').trim(),
+              status: 'New', // ALWAYS 'New' as requested
               reference: String(row['Reference'] || row['REFRENCE'] || row['Source'] || row['reference'] || 'Walk-in / Direct Visit').trim(),
               referenceDetails: String(row['Reference Details'] || row['SUGGESTED'] || row['Suggested'] || row['referenceDetails'] || '').trim(),
               notes: String(row['Counselor Notes'] || row['REMARK'] || row['Remarks'] || row['Notes'] || row['notes'] || '').trim(),
@@ -116,7 +127,7 @@ const ImportInquiryModal = ({ isOpen, onClose, onSuccess }) => {
           } else {
             invalid.push({
               _rowNum: idx + 2,
-              reason: !studentName ? 'Missing Student Name' : 'Missing Contact Number',
+              reason: 'Missing Contact/Mobile Number',
               row,
             });
           }
@@ -220,6 +231,21 @@ const ImportInquiryModal = ({ isOpen, onClose, onSuccess }) => {
               <Download className="w-3.5 h-3.5" />
               <span>Download Sample Template</span>
             </button>
+          </div>
+
+          {/* Rules & Duplicate Policy Info */}
+          <div className="p-3.5 rounded-xl bg-amber-50/90 border border-amber-200 text-amber-900 text-xs flex items-start space-x-2.5">
+            <CheckCircle2 className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <p className="font-bold text-amber-950">
+                Excel Import નિયમો & સુરક્ષા:
+              </p>
+              <ul className="list-disc pl-4 text-amber-900 space-y-0.5 text-[11px]">
+                <li><strong>Duplicate Check:</strong> જો ડેટાબેઝમાં તે મોબાઈલ નંબર પહેલેથી હાજર હશે, તો નવો રેકોર્ડ એડ નહીં થાય (સ્કીપ થશે).</li>
+                <li><strong>Status:</strong> અપલોડ થયેલ તમામ ઇન્ક્વાયરીઝનું સ્ટેટસ હંમેશા <strong>"New"</strong> રહેશે.</li>
+                <li><strong>Flexible Entry:</strong> ઈમેલ, કોલેજ, ડિગ્રી કે કોર્સ ખાલી હશે તો પણ એન્ટ્રી સફળતાપૂર્વક થઈ જશે.</li>
+              </ul>
+            </div>
           </div>
 
           {/* Success or Error Message */}
