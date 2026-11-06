@@ -76,8 +76,8 @@ const InquiryDetailsModal = ({
                   {inquiry.status}
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Inquiry Date: {new Date(inquiry.inquiryDate || inquiry.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+              <p className="text-xs text-slate-300 mt-0.5">
+                Inquiry Date: {new Date(inquiry.inquiryDate || inquiry.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} at {new Date(inquiry.createdAt || inquiry.inquiryDate).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
               </p>
             </div>
           </div>

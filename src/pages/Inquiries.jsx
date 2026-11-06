@@ -322,9 +322,15 @@ const Inquiries = ({
                       <span className="font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md inline-block" title={inq.interestedDomain}>
                         {inq.interestedDomain}
                       </span>
-                      <div className="text-[11px] text-slate-400 mt-1 flex items-center">
-                        <Calendar className="w-3 h-3 mr-1" />
-                        {new Date(inq.inquiryDate || inq.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      <div className="text-[11px] text-slate-500 mt-1 flex items-center space-x-1.5 flex-wrap">
+                        <span className="flex items-center text-slate-600 font-medium">
+                          <Calendar className="w-3 h-3 mr-1 text-slate-400" />
+                          {new Date(inq.createdAt || inq.inquiryDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </span>
+                        <span className="flex items-center text-indigo-700 font-semibold bg-indigo-50/80 px-1.5 py-0.2 rounded border border-indigo-200/80 text-[10px]">
+                          <Clock className="w-2.5 h-2.5 mr-1 text-indigo-500" />
+                          {new Date(inq.createdAt || inq.inquiryDate).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                        </span>
                       </div>
                       <div className="text-[10px] text-indigo-700 font-semibold bg-indigo-50/80 border border-indigo-200/80 rounded px-1.5 py-0.5 w-max mt-1">
                         Taken By: {inq.takenBy || 'Haresh Sir'}

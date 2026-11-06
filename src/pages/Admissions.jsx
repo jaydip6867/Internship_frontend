@@ -241,7 +241,7 @@ const Admissions = ({ onOpenAdmissionDetails }) => {
                   <th className="px-3 py-3.5 text-center w-10 text-slate-400">#</th>
                   <th className="px-4 py-3.5">Reg. No & Student</th>
                   <th className="px-4 py-3.5">Domain & Batch</th>
-                  <th className="px-4 py-3.5">Joining Date</th>
+                  <th className="px-5 py-3.5">Joining & Admission Date</th>
                   <th className="px-4 py-3.5">Fees Summary</th>
                   <th className="px-4 py-3.5 whitespace-nowrap">Status</th>
                   <th className="px-2 py-3.5 text-center w-14">Actions</th>
@@ -275,13 +275,20 @@ const Admissions = ({ onOpenAdmissionDetails }) => {
                       <div className="text-[11px] text-slate-500">{adm.duration} • {adm.batchTime}</div>
                     </td>
 
-                    {/* Joining Date */}
+                    {/* Joining & Admission Date & Time */}
                     <td className="px-5 py-3.5">
-                      <div className="font-medium text-slate-800">
-                        {new Date(adm.joiningDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      <div className="font-semibold text-slate-800 text-xs flex items-center">
+                        <Calendar className="w-3 h-3 mr-1 text-slate-400" />
+                        <span>Join: {adm.joiningDate ? new Date(adm.joiningDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}</span>
                       </div>
-                      <div className="text-[11px] text-slate-400">
-                        Adm: {new Date(adm.admissionDate || adm.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                      <div className="text-[11px] text-slate-500 mt-1 flex items-center space-x-1.5 flex-wrap">
+                        <span className="text-purple-700 font-medium">
+                          Adm: {new Date(adm.admissionDate || adm.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </span>
+                        <span className="flex items-center text-purple-700 font-semibold bg-purple-50 px-1.5 py-0.2 rounded border border-purple-200 text-[10px]">
+                          <Clock className="w-2.5 h-2.5 mr-1 text-purple-500" />
+                          {new Date(adm.createdAt || adm.admissionDate).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                        </span>
                       </div>
                     </td>
 

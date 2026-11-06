@@ -57,7 +57,7 @@ const AdmissionDetailsModal = ({ isOpen, onClose, admission, onSuccess }) => {
                 </span>
               </div>
               <p className="text-xs text-indigo-200 mt-0.5">
-                Official Internship Admission & Fee Record
+                Admitted: {new Date(admission.admissionDate || admission.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} at {new Date(admission.createdAt || admission.admissionDate).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
               </p>
             </div>
           </div>
@@ -119,6 +119,12 @@ const AdmissionDetailsModal = ({ isOpen, onClose, admission, onSuccess }) => {
               <span className="text-slate-500">Joining Date:</span>
               <span className="font-semibold text-slate-800">
                 {new Date(admission.joiningDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 p-3 bg-purple-50/50">
+              <span className="text-purple-900 font-medium">Admission Date & Time:</span>
+              <span className="font-semibold text-purple-900">
+                {new Date(admission.admissionDate || admission.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} at {new Date(admission.createdAt || admission.admissionDate).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
               </span>
             </div>
             <div className="grid grid-cols-2 p-3 bg-slate-50/50">

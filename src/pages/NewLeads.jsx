@@ -449,7 +449,9 @@ const NewLeads = ({
                               {lead.studentName}
                             </span>
                             <span className="text-[11px] text-slate-400 block mt-0.5">
-                              {lead.createdAt ? new Date(lead.createdAt).toLocaleDateString() : 'Today'}
+                              {lead.createdAt 
+                                ? `${new Date(lead.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} at ${new Date(lead.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}` 
+                                : 'Today'}
                             </span>
                           </td>
 
