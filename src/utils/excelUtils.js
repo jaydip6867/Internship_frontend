@@ -274,3 +274,55 @@ export const downloadSampleAdmissionTemplate = () => {
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Sample_Admissions');
   XLSX.writeFile(workbook, 'Sample_Admission_Upload_Template.xlsx');
 };
+
+// 5. Download Sample Google Sheet / Form Leads Import Template
+export const downloadSampleLeadTemplate = () => {
+  const sampleData = [
+    {
+      'Timestamp': '2026-11-06 10:30:00',
+      'Student Full Name': 'Rohan Shah',
+      'Mobile / WhatsApp Number': '9898776655',
+      'Email Address': 'rohan.shah@gmail.com',
+      'College / University Name': 'VNSGU Surat',
+      'Current Course': 'BCA',
+      'Current Academic Year': '3rd Year',
+      'Preferred Internship Domain': 'Full Stack Web Development (MERN)',
+      'Internship Program Preference': 'Free Internship',
+      'Preferred Internship Mode': 'Offline (Surat)',
+      'Any Questions? (Optional)': 'Interested in live project internship with certification',
+    },
+    {
+      'Timestamp': '2026-11-06 11:15:00',
+      'Student Full Name': 'Pooja Patel',
+      'Mobile / WhatsApp Number': '9876501234',
+      'Email Address': 'pooja.p@gmail.com',
+      'College / University Name': 'SCET Surat',
+      'Current Course': 'B.Tech',
+      'Current Academic Year': 'Final Year',
+      'Preferred Internship Domain': 'AI & Machine Learning',
+      'Internship Program Preference': 'Paid Internship',
+      'Preferred Internship Mode': 'Offline (Surat)',
+      'Any Questions? (Optional)': 'Looking for 6 months live training',
+    },
+  ];
+
+  const worksheet = XLSX.utils.json_to_sheet(sampleData);
+
+  worksheet['!cols'] = [
+    { wch: 20 }, // Timestamp
+    { wch: 22 }, // Student Full Name
+    { wch: 18 }, // Mobile / WhatsApp Number
+    { wch: 26 }, // Email Address
+    { wch: 24 }, // College / University Name
+    { wch: 16 }, // Current Course
+    { wch: 18 }, // Current Academic Year
+    { wch: 32 }, // Preferred Internship Domain
+    { wch: 26 }, // Internship Program Preference
+    { wch: 20 }, // Preferred Internship Mode
+    { wch: 35 }, // Any Questions? (Optional)
+  ];
+
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Google_Sheet_Leads');
+  XLSX.writeFile(workbook, 'Sample_Google_Sheet_Leads_Template.xlsx');
+};

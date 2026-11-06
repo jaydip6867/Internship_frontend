@@ -26,12 +26,14 @@ import {
   FileText,
   ArrowRightCircle,
   X,
-  ShieldCheck
+  ShieldCheck,
+  Upload
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axiosClient from '../api/axiosClient';
 import GoogleFormView from '../components/GoogleFormView';
 import ConvertLeadModal from '../components/ConvertLeadModal';
+import ImportLeadModal from '../components/ImportLeadModal';
 import { exportInquiriesToExcel } from '../utils/excelUtils';
 
 const NewLeads = ({ 
@@ -56,6 +58,7 @@ const NewLeads = ({
   // Google Form Webhook Integration State
   const [syncStatus, setSyncStatus] = useState({ syncActive: false, lastPing: null });
   const [isIntegrationModalOpen, setIsIntegrationModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [copiedScript, setCopiedScript] = useState(false);
   const [copiedWebhookUrl, setCopiedWebhookUrl] = useState(false);
 
@@ -221,6 +224,16 @@ const NewLeads = ({
             <ExternalLink className="w-3.5 h-3.5 text-indigo-600" />
             <span>Open Public Form</span>
           </a>
+
+          <button
+            type="button"
+            onClick={() => setIsImportModalOpen(true)}
+            title="Import Leads from Google Sheet (Excel or CSV)"
+            className="inline-flex items-center space-x-1.5 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-xl border border-emerald-200 transition-colors shadow-xs active:scale-95"
+          >
+            <Upload className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Import Sheet / Excel</span>
+          </button>
 
           <button
             type="button"
@@ -656,6 +669,15 @@ const NewLeads = ({
         />
       )}
 
+      {/* Import Google Sheet / Excel Leads Modal */}
+      {isImportModalOpen && (
+        <ImportLeadModal
+          isOpen={isImportModalOpen}
+          onClose={() => setIsImportModalOpen(false)}
+          onSuccess={fetchLeads}
+        />
+      )}
+
       {/* Delete Confirmation Modal */}
       {deleteConfirmId && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -797,7 +819,87 @@ const NewLeads = ({
                   </label>
                   <button
                     onClick={() => {
-                      const script = `function onFormSubmit(e) {
+                      const script = `/**
+ * Internship Management Portal - Google Sheet Sync Script
+ * Backend: https://internship-backend-5oke.onrender.com
+ */
+
+// 1. Adds custom menu in Google Sheet when opened
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu("⚡ Internship Portal")
+    .addItem("📥 Sync All Rows to New Leads", "syncAllSheetRows")
+    .addItem("🧪 Test Connection", "testWebhook")
+    .addToUi();
+}
+
+// 2. Syncs all rows from Google Sheet to New Leads page
+function syncAllSheetRows() {
+  var ui = SpreadsheetApp.getUi();
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var data = sheet.getDataRange().getValues();
+
+  if (data.length <= 1) {
+    ui.alert("⚠️ Sheet Empty", "No student rows found to sync.", ui.ButtonSet.OK);
+    return;
+  }
+
+  var rowsToSend = [];
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    if (!row[1] && !row[2]) continue;
+
+    rowsToSend.push({
+      timestamp: row[0],
+      studentName: row[1] || '',
+      contactNo: row[2] ? String(row[2]) : '',
+      email: row[3] || '',
+      collegeName: row[4] || '',
+      degree: row[5] || '',
+      semester: row[6] || '',
+      interestedDomain: row[7] || '',
+      internshipType: row[8] || '',
+      internshipMode: row[9] || '',
+      notes: row[10] || ''
+    });
+  }
+
+  if (rowsToSend.length === 0) {
+    ui.alert("⚠️ Notice", "No valid lead records found to sync.", ui.ButtonSet.OK);
+    return;
+  }
+
+  var url = "https://internship-backend-5oke.onrender.com/api/leads/sync-batch";
+  var options = {
+    method: "post",
+    contentType: "application/json",
+    payload: JSON.stringify({ leads: rowsToSend }),
+    muteHttpExceptions: true
+  };
+
+  try {
+    var response = UrlFetchApp.fetch(url, options);
+    var resData = JSON.parse(response.getContentText());
+
+    if (resData.success) {
+      ui.alert(
+        "✅ Sync Successful!",
+        "Total Rows Sent: " + rowsToSend.length + "\\n" +
+        "New Leads Added: " + resData.addedCount + "\\n" +
+        "Updated Leads: " + resData.updatedCount + "\\n\\n" +
+        "All records are now added ONLY to the New Leads page!",
+        ui.ButtonSet.OK
+      );
+    } else {
+      ui.alert("❌ Sync Failed", resData.message || "Unknown error", ui.ButtonSet.OK);
+    }
+  } catch (err) {
+    ui.alert("❌ Error", "Could not connect to server: " + err.message, ui.ButtonSet.OK);
+  }
+}
+
+// 3. Automatically triggers on new Google Form submissions
+function onFormSubmit(e) {
   var webhookUrl = "https://internship-backend-5oke.onrender.com/api/leads/google-form-webhook";
   try {
     var payload = {};
@@ -819,7 +921,7 @@ const NewLeads = ({
       payload = {
         timestamp: e.values[0] || '',
         studentName: e.values[1] || '',
-        contactNo: e.values[2] || '',
+        contactNo: e.values[2] ? String(e.values[2]) : '',
         email: e.values[3] || '',
         collegeName: e.values[4] || '',
         degree: e.values[5] || '',
@@ -829,16 +931,32 @@ const NewLeads = ({
         internshipMode: e.values[9] || '',
         notes: e.values[10] || ''
       };
+    } else {
+      syncAllSheetRows();
+      return;
     }
-    var options = {
+
+    UrlFetchApp.fetch(webhookUrl, {
       method: "post",
       contentType: "application/json",
       payload: JSON.stringify(payload),
       muteHttpExceptions: true
-    };
-    UrlFetchApp.fetch(webhookUrl, options);
+    });
   } catch (err) {
     Logger.log("Error: " + err.message);
+  }
+}
+
+// 4. Test connection ping
+function testWebhook() {
+  var ui = SpreadsheetApp.getUi();
+  var url = "https://internship-backend-5oke.onrender.com/api/leads/sync-status";
+  try {
+    var res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    var data = JSON.parse(res.getContentText());
+    ui.alert("✅ Connection Successful", "Backend is online! Status: " + data.statusText, ui.ButtonSet.OK);
+  } catch (err) {
+    ui.alert("❌ Error", err.message, ui.ButtonSet.OK);
   }
 }`;
                       navigator.clipboard.writeText(script);
@@ -855,40 +973,24 @@ const NewLeads = ({
                     ) : (
                       <>
                         <Copy className="w-3.5 h-3.5 text-indigo-600" />
-                        <span>Copy Apps Script</span>
+                        <span>Copy Complete Apps Script</span>
                       </>
                     )}
                   </button>
                 </div>
 
                 <pre className="p-3 bg-slate-900 text-slate-100 rounded-xl text-[11px] font-mono overflow-x-auto max-h-48 leading-relaxed">
-{`function onFormSubmit(e) {
-  var webhookUrl = "https://internship-backend-5oke.onrender.com/api/leads/google-form-webhook";
-  try {
-    var payload = {};
-    if (e && e.namedValues) {
-      payload = {
-        studentName: (e.namedValues['Student Full Name'] ? e.namedValues['Student Full Name'][0] : ''),
-        contactNo: (e.namedValues['Mobile / WhatsApp Number'] ? e.namedValues['Mobile / WhatsApp Number'][0] : ''),
-        email: (e.namedValues['Email Address'] ? e.namedValues['Email Address'][0] : ''),
-        collegeName: (e.namedValues['College / University Name'] ? e.namedValues['College / University Name'][0] : ''),
-        degree: (e.namedValues['Current Course'] ? e.namedValues['Current Course'][0] : ''),
-        semester: (e.namedValues['Current Academic Year'] ? e.namedValues['Current Academic Year'][0] : ''),
-        interestedDomain: (e.namedValues['Preferred Internship Domain'] ? e.namedValues['Preferred Internship Domain'][0] : ''),
-        internshipType: (e.namedValues['Internship Program Preference'] ? e.namedValues['Internship Program Preference'][0] : ''),
-        internshipMode: (e.namedValues['Preferred Internship Mode'] ? e.namedValues['Preferred Internship Mode'][0] : ''),
-        notes: (e.namedValues['Any Questions? (Optional)'] ? e.namedValues['Any Questions? (Optional)'][0] : '')
-      };
-    }
-    UrlFetchApp.fetch(webhookUrl, {
-      method: "post",
-      contentType: "application/json",
-      payload: JSON.stringify(payload),
-      muteHttpExceptions: true
-    });
-  } catch (err) {
-    Logger.log("Error: " + err.message);
-  }
+{`function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu("⚡ Internship Portal")
+    .addItem("📥 Sync All Rows to New Leads", "syncAllSheetRows")
+    .addItem("🧪 Test Connection", "testWebhook")
+    .addToUi();
+}
+
+function syncAllSheetRows() {
+  // Reads all rows from Google Sheet and sends in batch to /api/leads/sync-batch
+  // All records are added ONLY to the New Leads page!
 }`}
                 </pre>
               </div>
